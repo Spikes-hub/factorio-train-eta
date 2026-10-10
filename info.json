@@ -1,0 +1,12 @@
+{
+  "name": "train-eta",
+  "version": "0.1.0",
+  "title": "Train ETA",
+  "author": "Spikes",
+  "factorio_version": "2.0",
+  "description": "Estimate train travel time between two points or stations for a chosen train type and fuel.",
+  "dependencies": [
+    "base >= 2.0.0"
+  ],
+  "homepage": "https://github.com/Spikes-hub/factorio-train-eta"
+}

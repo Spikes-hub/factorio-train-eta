@@ -1,0 +1,10 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2026-10-10
+  Features:
+    - Initial release.
+    - Panel with all train types currently on rails, grouped by composition (shortcut button or Ctrl+Shift+Y).
+    - Fuel selection from every fuel accepted by locomotives, with item icons.
+    - Pick two rails or train stops on the map; the mod finds the shortest path with the game's own pathfinder.
+    - Estimated travel time and fuel burned for the selected train types, using train physics (acceleration, braking, air resistance, fuel bonuses).
+    - Selected train types and fuel are remembered between games.
