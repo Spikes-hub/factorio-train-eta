@@ -10,7 +10,7 @@ Open the map, pick a fuel, tick the train types you care about, click two rails 
 
 - Lists every train type currently on rails, grouped by composition (e.g. `1× Locomotive + 4× Cargo wagon`).
 - Fuel selector with item icons — every fuel your locomotives accept, including modded ones.
-- Shortest route found by the game's own train pathfinder.
+- Shortest route found by the game's own train pathfinder, drawn on the map along the rails while the panel is open.
 - Estimated travel time and fuel burned, simulated from train physics: acceleration, braking, air resistance, fuel acceleration/top-speed bonuses and your braking-force research.
 - Selected train types and fuel are remembered between games (hidden per-player mod settings).
 - English and Russian locales.
@@ -32,13 +32,13 @@ Open the map, pick a fuel, tick the train types you care about, click two rails 
 ## Install
 
 - From the in-game mod portal / [mods.factorio.com](https://mods.factorio.com) (search for **Train ETA**), or
-- Download `train-eta_0.1.0.zip` from the [Releases](../../releases) page and put it into your `mods` folder (`%APPDATA%\Factorio\mods` on Windows). Do not unzip it.
+- Download `train-eta_0.2.0.zip` from the [Releases](../../releases) page and put it into your `mods` folder (`%APPDATA%\Factorio\mods` on Windows). Do not unzip it.
 
 Requires Factorio 2.0.
 
 ## Development
 
-The repository root is the mod itself. To test locally, copy the folder into `mods/` as `train-eta_0.1.0`.
+The repository root is the mod itself. To test locally, copy the folder into `mods/` as `train-eta_0.2.0`.
 
 ## License
 

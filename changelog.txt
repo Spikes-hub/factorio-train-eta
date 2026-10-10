@@ -1,4 +1,17 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2026-10-10
+  Features:
+    - The route between the two picked points is now drawn on the map along the rails (red line). It is visible only to you and only while the panel is open.
+    - Fuel selector shows item icons and every fuel accepted by locomotives.
+    - Fuel burned on the route is shown on its own line for each train type.
+  Changes:
+    - The path is searched once for the two points, so the route and its length are shown even when no train type is ticked.
+    - Travel time is now a physics simulation (acceleration, braking, air resistance, fuel bonuses) instead of length divided by top speed.
+  Bugfixes:
+    - Fixed crashes when opening the panel (train list API, duplicate checkbox names).
+    - Fixed a single click picking the same station as both points.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2026-10-10
   Features:

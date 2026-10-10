@@ -189,9 +189,49 @@ local function estimate(train, fuel, length, force)
   }
 end
 
+-- Route line drawn along the rails of the found path; only visible to this player while the panel is open.
+local LINE_COLOR = { r = 1, g = 0, b = 0, a = 1 }
+
+local function clear_path(player_index)
+  local state = storage.players[player_index]
+  if not state or not state.lines then return end
+  for _, obj in pairs(state.lines) do
+    if obj.valid then obj.destroy() end
+  end
+  state.lines = nil
+end
+
+local function draw_path(player_index, rails)
+  clear_path(player_index)
+  local state = player_state(player_index)
+  local player = game.get_player(player_index)
+  if not (rails and #rails > 1 and player.gui.screen[FRAME]) then return end
+  local lines = {}
+  local function add(from, to, mode, width)
+    local ok, obj = pcall(rendering.draw_line, {
+      color = LINE_COLOR, width = width, from = from, to = to, surface = rails[1].surface,
+      players = { player_index }, render_mode = mode, draw_on_ground = false,
+    })
+    if ok and obj then lines[#lines + 1] = obj end
+  end
+  local step = #rails > 3000 and 2 or 1
+  local prev = rails[1].position
+  for i = 1 + step, #rails, step do
+    local rail = rails[i]
+    if rail.valid then
+      local pos = rail.position
+      add(prev, pos, "game", 16)
+      add(prev, pos, "chart", 24)
+      prev = pos
+    end
+  end
+  state.lines = lines
+end
+
 local function compute(player_index)
   local state = player_state(player_index)
   state.result, state.message = {}, nil
+  clear_path(player_index)
   if #state.points < 2 then return end
 
   local fuel = state.fuel and prototypes.item[state.fuel]
@@ -209,26 +249,29 @@ local function compute(player_index)
   local sa1, sa2 = both_ends(a)
   local gb1, gb2 = both_ends(b)
 
-  local length
+  -- One path request for the points themselves (no train needed with explicit starts); it also
+  -- gives the rails to draw on the map.
+  local ok, res = pcall(game.train_manager.request_train_path, {
+    type = "path",
+    starts = { sa1, sa2 },
+    goals = { gb1, gb2 },
+    shortest_path = true,
+    return_path = true,
+  })
+  if not ok then
+    state.message = tostring(res)
+    return
+  end
+  if not res.found_path then
+    state.message = { "train-eta.no-path" }
+    return
+  end
+  local length = res.total_length
+  draw_path(player_index, res.path)
+
   for _, g in ipairs(groups) do
     if state.selected[g.key] and g.sample.valid then
       any = true
-      local ok, res = pcall(game.train_manager.request_train_path, {
-        train = g.sample,
-        type = "path",
-        starts = { sa1, sa2 },
-        goals = { gb1, gb2 },
-        shortest_path = true,
-      })
-      if not ok then
-        state.message = tostring(res)
-        return
-      end
-      if not res.found_path then
-        state.message = { "train-eta.no-path" }
-        return
-      end
-      length = res.total_length
       local est_ok, est, err = pcall(estimate, g.sample, fuel, length, force)
       if not est_ok then
         state.message = tostring(est)
@@ -248,9 +291,8 @@ local function compute(player_index)
   end
   if not any then
     state.message = { "train-eta.no-group" }
-  else
-    table.insert(state.result, 1, { "train-eta.path-length", string.format("%.0f", length) })
   end
+  table.insert(state.result, 1, { "train-eta.path-length", string.format("%.0f", length) })
 end
 
 local function destroy_gui(player)
@@ -328,18 +370,27 @@ end
 
 local function toggle_gui(player)
   if player.gui.screen[FRAME] then
+    clear_path(player.index)
     destroy_gui(player)
     player.set_shortcut_toggled("train-eta-toggle", false)
     player_state(player.index).picking = false
   else
     build_gui(player)
     player.set_shortcut_toggled("train-eta-toggle", true)
+    -- Redraw the route of the previously picked points.
+    if #player_state(player.index).points == 2 then
+      compute(player.index)
+      build_gui(player)
+    end
   end
 end
 
 script.on_init(function() storage.players = {} end)
 script.on_configuration_changed(function() storage.players = storage.players or {} end)
-script.on_event(defines.events.on_player_removed, function(e) storage.players[e.player_index] = nil end)
+script.on_event(defines.events.on_player_removed, function(e)
+  clear_path(e.player_index)
+  storage.players[e.player_index] = nil
+end)
 
 script.on_event(defines.events.on_lua_shortcut, function(e)
   if e.prototype_name == "train-eta-toggle" then toggle_gui(game.get_player(e.player_index)) end
@@ -367,7 +418,10 @@ script.on_event("train-eta-click", function(e)
   if state.last_click_tick and game.tick - state.last_click_tick < 15 then return end
   state.last_click_tick = game.tick
   state.message = nil
-  if #state.points >= 2 then state.points = {} end
+  if #state.points >= 2 then
+    state.points = {}
+    clear_path(e.player_index)
+  end
   state.points[#state.points + 1] = point
   if #state.points == 2 then
     state.picking = false
@@ -391,10 +445,14 @@ script.on_event(defines.events.on_gui_click, function(e)
     build_gui(player)
   elseif name == "train_eta_pick" then
     state.picking = not state.picking
-    if state.picking then state.points, state.result, state.message = {}, {}, nil end
+    if state.picking then
+      state.points, state.result, state.message = {}, {}, nil
+      clear_path(e.player_index)
+    end
     build_gui(player)
   elseif name == "train_eta_reset" then
     state.points, state.result, state.message, state.picking = {}, {}, nil, false
+    clear_path(e.player_index)
     build_gui(player)
   end
 end)
